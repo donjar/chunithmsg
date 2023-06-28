@@ -80,7 +80,7 @@ export const tryParseSubmissionRow = (
       row[columnIndexes.formSubmissionTimestamp]
     ).getTime();
     const songScores = [0, 1, 2].map((index) => ({
-      score: parseInt(row[columnIndexes.songs + 2 * index]),
+      score: parseInt(row[columnIndexes.songs + 2 * index], 10),
       ajFcStatus: (row[columnIndexes.songs + 2 * index + 1] ?? "") as
         | ""
         | "FC"
@@ -93,7 +93,7 @@ export const tryParseSubmissionRow = (
         timestamp,
         formSubmissionTimestamp,
         ...songScores.map(({ score }) => score),
-      ].some(isNaN)
+      ].some(Number.isNaN)
     ) {
       throw new Error("One of the numerical fields is parsed as NaN.");
     }
@@ -115,9 +115,8 @@ export const tryParseSubmissionRow = (
   }
 };
 
-const notUndefined = <TValue>(value: TValue | undefined): value is TValue => {
-  return value !== undefined;
-};
+const notUndefined = <TValue>(value: TValue | undefined): value is TValue =>
+  value !== undefined;
 
 export class SubmissionController {
   authClient?: AuthClient;
@@ -134,14 +133,14 @@ export class SubmissionController {
   async getAllSubmissions(options?: SubmissionOptions) {
     const output: { [S in QualifierSet]?: Submission[] } = {};
 
-    // Not taking advantage of possibilities of concurrency/parallelism,
-    // but that can be a problem for the future. This is good enough.
-    for (const qualifierSet of allQualifierSets) {
-      output[qualifierSet] = await this.getSubmissionForSet(
-        qualifierSet,
-        options
-      );
-    }
+    await Promise.all(
+      allQualifierSets.map(async (qualifierSet) => {
+        output[qualifierSet] = await this.getSubmissionForSet(
+          qualifierSet,
+          options
+        );
+      })
+    );
 
     return output as SubmissionSet;
   }

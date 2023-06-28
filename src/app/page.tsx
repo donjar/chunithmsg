@@ -1,18 +1,8 @@
 "use client";
 
-import { Table, Switch, Tabs, Button, Tag, notification } from "antd";
+import { Table, Switch, Tabs, Button, Tag } from "antd";
 import { RedoOutlined } from "@ant-design/icons";
 import Image from "next/image";
-
-import wakeUpDreamer from "../../public/wakeupdreamer.png";
-import chaos from "../../public/chaos.png";
-import pygmalion from "../../public/pygmalion.png";
-import valsqotch from "../../public/valsqotch.png";
-import imperishableNight from "../../public/imperishablenight.png";
-import battleNo1 from "../../public/battleno1.png";
-import spica from "../../public/spica.png";
-import weGonnaJourney from "../../public/wegonnajourney.png";
-import blazingStorm from "../../public/blazingstorm.png";
 
 import styled from "styled-components";
 import { useCallback, useEffect, useState } from "react";
@@ -23,12 +13,17 @@ import { IndividualSongStanding } from "@/models/individualSongStanding";
 import IndividualSongLeaderboard from "@/components/IndividualSongLeaderboard";
 import SongScoreLabel from "@/components/SongScoreLabel";
 import { SongWithJacket } from "@/utils/songUtils";
-import {
-  leaderboardFreezeEndTimestamp,
-  leaderboardFreezeStartTimestamp,
-  qualifiersEndTimestamp,
-} from "@/utils/constants";
 import { formatScore, formatTimestamp } from "@/utils/leaderboardUtils";
+
+import wakeUpDreamer from "../../public/wakeupdreamer.png";
+import chaos from "../../public/chaos.png";
+import pygmalion from "../../public/pygmalion.png";
+import valsqotch from "../../public/valsqotch.png";
+import imperishableNight from "../../public/imperishablenight.png";
+import battleNo1 from "../../public/battleno1.png";
+import spica from "../../public/spica.png";
+import weGonnaJourney from "../../public/wegonnajourney.png";
+import blazingStorm from "../../public/blazingstorm.png";
 
 interface Song {
   image: any;
@@ -138,22 +133,6 @@ const generateColumns = (songs: Song[]): ColumnsType<Standing> => [
   },
 ];
 
-const formatDuration = (durationInMilliseconds: number) => {
-  let tempDuration = Math.floor(durationInMilliseconds / 1000);
-  const numSeconds = tempDuration % 60;
-
-  tempDuration = Math.floor(tempDuration / 60);
-  const numMinutes = tempDuration % 60;
-
-  tempDuration = Math.floor(tempDuration / 60);
-  const numHours = tempDuration % 24;
-
-  tempDuration = Math.floor(tempDuration / 24);
-  const numDays = tempDuration;
-
-  return `${numDays}d ${numHours}h ${numMinutes}m ${numSeconds}s`;
-};
-
 const LeaderboardTable = styled(Table<Standing>)`
   .masters-finalist {
     background-color: #f0e9f5;
@@ -169,12 +148,6 @@ const LeaderboardTable = styled(Table<Standing>)`
 `;
 
 const Leaderboard = () => {
-  const [api, contextHolder] = notification.useNotification();
-
-  const [currentTimestamp, setCurrentTimestamp] = useState<number | undefined>(
-    undefined
-  );
-
   const [shouldHideDisqualified, setShouldHideDisqualified] = useState(true);
   const [shouldHideFinalists, setShouldHideFinalists] = useState(false);
 
@@ -192,40 +165,21 @@ const Leaderboard = () => {
   const fetchStandings = useCallback(async () => {
     setIsFetchingStandings(true);
     const response = await fetch("/submissions");
-    const { masters, challengers, individualSongStandings } =
-      await response.json();
+    const {
+      masters,
+      challengers,
+      individualSongStandings: responseIndividualSongStandings,
+    } = await response.json();
 
     setChallengerStandings(challengers);
     setMasterStandings(masters);
-    setIndividualSongStandings(individualSongStandings);
+    setIndividualSongStandings(responseIndividualSongStandings);
     setIsFetchingStandings(false);
   }, []);
-
-  const updateCurrentTimestamp = useCallback(async () => {
-    const response = await fetch("/current-time");
-    const { unixTimestamp } = await response.json();
-
-    setCurrentTimestamp(unixTimestamp);
-  }, []);
-
-  useEffect(() => {
-    const interval = setInterval(updateCurrentTimestamp, 250);
-    return () => clearInterval(interval);
-  }, [updateCurrentTimestamp]);
 
   useEffect(() => {
     fetchStandings().catch(console.error);
   }, [fetchStandings]);
-
-  const qualifiersRemainingTimeInMilliseconds =
-    currentTimestamp === undefined
-      ? undefined
-      : Math.max(qualifiersEndTimestamp - currentTimestamp, 0);
-
-  const isLeaderboardFrozen =
-    currentTimestamp &&
-    leaderboardFreezeStartTimestamp <= currentTimestamp &&
-    currentTimestamp < leaderboardFreezeEndTimestamp;
 
   const table = (
     songs: Song[],
@@ -246,22 +200,15 @@ const Leaderboard = () => {
         }`
       }
       pagination={false}
-      rowKey={"ign"}
+      rowKey="ign"
       scroll={{ x: true }}
     />
   );
 
   return (
     <>
-      {contextHolder}
       <h1>Leaderboard</h1>
-      <p style={{ fontWeight: "bold" }}>{`Qualifiers time remaining: ${
-        qualifiersRemainingTimeInMilliseconds === undefined
-          ? "---"
-          : qualifiersRemainingTimeInMilliseconds > 0
-          ? formatDuration(qualifiersRemainingTimeInMilliseconds)
-          : "Ended!"
-      }`}</p>
+      <p style={{ fontWeight: "bold" }}>Qualifiers time remaining: Ended!</p>
       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
         <div
           style={{
@@ -276,7 +223,7 @@ const Leaderboard = () => {
               onChange={setShouldHideDisqualified}
               checked={shouldHideDisqualified}
             />
-            {"Hide Disqualified"}
+            Hide Disqualified
           </div>
           {(activeTab === "individualMastersSongStandings" ||
             activeTab === "individualChallengersSongStandings") && (
@@ -285,7 +232,7 @@ const Leaderboard = () => {
                 onChange={setShouldHideFinalists}
                 checked={shouldHideFinalists}
               />
-              {"Hide Finalists"}
+              Hide Finalists
             </div>
           )}
         </div>
@@ -293,35 +240,11 @@ const Leaderboard = () => {
           icon={<RedoOutlined />}
           type="default"
           disabled={isFetchingStandings}
-          onClick={() => {
-            if (isLeaderboardFrozen) {
-              api.info({
-                message: "Bruh, calm down",
-                description:
-                  "The leaderboard is still frozen. I promise it'll unfreeze when the qualifiers are over, which should happen soon. Be patient, okay? :›",
-                placement: "bottomRight",
-                duration: 6,
-              });
-            }
-            fetchStandings();
-          }}
+          onClick={fetchStandings}
         >
           Refresh
         </Button>
       </div>
-      {isLeaderboardFrozen && (
-        <div
-          style={{
-            marginTop: "12px",
-            marginBottom: "4px",
-            fontWeight: "bold",
-            fontSize: "large",
-            textAlign: "center",
-          }}
-        >
-          The leaderboard is currently frozen
-        </div>
-      )}
       <Tabs
         style={{ marginTop: "8px" }}
         onChange={setActiveTab}

@@ -20,10 +20,11 @@ export const generateKey = (scoreMap: {
   const MULTIPLIER = 151;
 
   let output = 0;
-  for (const songId of allSongIds) {
+
+  allSongIds.forEach((songId) => {
     const individualScore = scoreMap[songId];
     if (!individualScore) {
-      continue;
+      return;
     }
 
     const {
@@ -35,7 +36,7 @@ export const generateKey = (scoreMap: {
       output = (output * MULTIPLIER + ign.charCodeAt(i)) % MOD;
     }
     output = (output * MULTIPLIER + score) % MOD;
-  }
+  });
 
   return output;
 };

@@ -1,5 +1,3 @@
-import { parseLocalDate } from "./dateUtils";
-
 /**
  * The URL of the Google Form used for submission.
  */
@@ -14,11 +12,3 @@ export const qualifiersSpreadsheetId =
 
 export const numMastersFinalists = 8;
 export const numChallengersFinalists = 16;
-
-export const qualifiersEndTimestamp =
-  parseLocalDate("2023-06-12 00:00").getTime();
-
-export const leaderboardFreezeStartTimestamp =
-  parseLocalDate("2023-06-10 00:00").getTime();
-export const leaderboardFreezeEndTimestamp =
-  parseLocalDate("2023-06-12 00:00").getTime();
